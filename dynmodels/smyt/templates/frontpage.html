@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load smyt_tags %}
+
+{% block content %}
+	<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Dynamic Models</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar" id="id-model-nav">
+          	{% for model in models_list %}
+            	<li class="{% url_is_active model request.path %}"><a href="{% get_data_url model %}" data-class="{% get_class_name model %}" class="get_model_data">{% get_verbose_name_plural model %}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">Dynamic Models</h1>
+
+          <div class="row placeholders">
+            <div class="col-xs-12 col-sm-12 placeholder text-left" id="id-content">
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+<script type="text/javascript">
+	$('a.get_model_data').on('click', function(e){
+		$('#id-model-nav li').removeClass('active');
+		$(this).parent('li').addClass('active');
+		
+		var fn = window['get_'+$(this).data('class')];
+		if(typeof fn == 'function'){ fn($(this).attr('href')); }
+		
+		return false;
+	});
+	
+	function get_Users(url){
+		$.getJSON(url, function(data) {
+			$('div#id-content').empty();
+			for(var key in data){
+				
+				var $form = $('<form method="post" class="form-inline" data-class="Users" role="form"></form>');
+				var $id = $('<input name="id" type="hidden" id="id_id"/>');
+				var $name = $('<input name="name" type="text" id="id_name"/>');
+				var $paycheck = $('<input name="paycheck" type="number" id="id_paycheck"/>');
+				var $date_joined = $('<input name="date_joined" type="text" id="id_date_joined" class="datepicker"/>');
+				
+				$form.append($('<label>ID: '+data[key]['pk']+'</label>').attr('for', $id.attr('id')));
+				$id.val(data[key]['pk']).appendTo($form);
+				
+				$form.append($('<label>Имя: </label>').attr('for', $name.attr('id')));
+				$form.append($('<span></span>').text(data[key]['fields']['name']));
+				$name.val(data[key]['fields']['name']).appendTo($form);
+				
+				$form.append($('<label>Зарплата: </label>').attr('for', $paycheck.attr('id')));
+				$form.append($('<span></span>').text(data[key]['fields']['paycheck']));
+				$paycheck.val(data[key]['fields']['paycheck']).appendTo($form);
+				
+				$form.append($('<label>Дата поступления на работу: </label>').attr('for', $date_joined.attr('id')+'_'+data[key]['pk']));
+				$form.append($('<span></span>').text(data[key]['fields']['date_joined']));
+				$date_joined.val(data[key]['fields']['date_joined']).attr('id', 'id_date_joined_'+data[key]['pk']).appendTo($form);
+				
+				$form.append($('<button class="btn btn-primary">Save</button>'));
+				$('div#id-content').append($form.attr('action', '/setData/'+data[key]['model'].split('.')[1]));
+				
+				$( ".datepicker" ).datepicker( { dateFormat: 'yy-mm-dd' } );
+				
+				console.log(data[key]);
+			}
+			
+			var $form = $('<form method="post" class="form-inline new" data-class="Users" role="form"></form>');
+			var $id = $('<input name="id" type="hidden" id="id_id"/>');
+			var $name = $('<input name="name" type="text" id="id_name"/>');
+			var $paycheck = $('<input name="paycheck" type="number" id="id_paycheck"/>');
+			var $date_joined = $('<input name="date_joined" type="text" id="id_date_joined" class="datepicker"/>');	
+			
+			$form.append($('<label>Имя: </label>').attr('for', $name.attr('id')));
+			$name.appendTo($form);
+				
+			$form.append($('<label>Зарплата: </label>').attr('for', $paycheck.attr('id')));
+			$paycheck.appendTo($form);
+			
+			$form.append($('<label>Дата поступления на работу: </label>').attr('for', $date_joined.attr('id')));
+			$date_joined.appendTo($form);
+			
+			$form.append($('<button class="btn btn-primary">Add</button>'));
+			$('div#id-content').append($form.attr('action', '/setData/users'));
+			$( ".datepicker" ).datepicker( { dateFormat: 'yy-mm-dd' } );
+				
+			$('div#id-content form:not(.new) span').on('click', function(){
+				$(this).hide();
+				$(this).next('input').show().focus();
+			});
+			$('div#id-content form:not(.new) label').on('click', function(){
+				$(this).next('span').hide();
+				$(this).next('span').next().show().focus();
+			});
+			$('div#id-content form:not(.new) input').on('focusout change', function(){
+				$(this).hide();
+				$(this).prev().text($(this).val()).show();
+			});
+			$('form').submit(formSubmit);
+		});
+	}
+	
+	function get_Rooms(url){
+		$.getJSON(url, function(data) {
+			$('div#id-content').empty();
+			for(var key in data){
+				
+				var $form = $('<form method="post" class="form-inline" data-class="Rooms" role="form"></form>');
+				var $id = $('<input name="id" type="hidden" id="id_id"/>');
+				var $department = $('<input name="department" type="text" id="id_department"/>');
+				var $spots = $('<input name="spots" type="number" id="id_spots"/>');	
+				
+				$form.append($('<label>ID: '+data[key]['pk']+'</label>').attr('for', $id.attr('id')));
+				$id.val(data[key]['pk']).appendTo($form);
+				
+				$form.append($('<label>Отдел: </label>').attr('for', $department.attr('id')));
+				$form.append($('<span></span>').text(data[key]['fields']['department']));
+				$department.val(data[key]['fields']['department']).appendTo($form);
+				
+				$form.append($('<label>Вместимость: </label>').attr('for', $spots.attr('id')));
+				$form.append($('<span></span>').text(data[key]['fields']['spots']));
+				$spots.val(data[key]['fields']['spots']).appendTo($form);
+				
+				$form.append($('<button class="btn btn-primary">Save</button>'));
+				$('div#id-content').append($form.attr('action', '/setData/'+data[key]['model'].split('.')[1]));
+				
+				console.log(data[key]);
+			}
+			
+			var $form = $('<form method="post" class="form-inline new" data-class="Rooms" role="form"></form>');
+			var $id = $('<input name="id" type="hidden" id="id_id"/>');
+			var $department = $('<input name="department" type="text" id="id_department"/>');
+			var $spots = $('<input name="spots" type="number" id="id_spots"/>');	
+				
+			$form.append($('<label>Отдел: </label>').attr('for', $department.attr('id')));
+			$department.appendTo($form);
+			
+			$form.append($('<label>Вместимость: </label>').attr('for', $spots.attr('id')));
+			$spots.appendTo($form);
+			
+			$form.append($('<button class="btn btn-primary">Add</button>'));
+			$('div#id-content').append($form.attr('action', '/setData/rooms'));
+				
+			$('div#id-content form:not(.new) span').on('click', function(){
+				$(this).hide()
+				$(this).next('input').show().focus();
+			});
+			$('div#id-content form:not(.new) label').on('click', function(){
+				$(this).next('span').hide();
+				$(this).next('span').next().show().focus();
+			});
+			$('div#id-content form:not(.new) input').on('focusout change', function(){
+				$(this).hide()
+				$(this).prev().text($(this).val()).show();
+			});
+			$('form').submit(formSubmit);
+		});
+	}
+	
+	$(function(){
+		$( "#datepicker" ).datepicker();
+	});
+	
+	$(document).ready(function(){
+		$($('a.get_model_data').get(0)).trigger('click');
+	});
+	
+	function formSubmit(){
+		var er = false;
+		$(this).find('input').each(function(i){
+			var $input = $(this);
+			if($input.val()==''){
+				$input.addClass('red');
+				$input.prev('span').prev('label').addClass('red');
+				$input.prev('span').addClass('red');
+				er = true;
+			}
+		});
+		if(er){alert("Поля отмеченные красным цветом, не должны быть пустыми!");}
+		else{
+			var refresh_a = $('a[data-class="'+$(this).data('class')+'"]');
+			$.post($(this).attr('action'), $(this).serialize(), function(data){
+				refresh_a.trigger('click');
+			});
+		}
+		return false;
+	}
+</script>
+<style type="text/css">
+	div#id-content form{
+		padding: 10px 0;
+		border-bottom: 1px solid rgb(230, 230, 230);
+	}
+	div#id-content form label[for=id_id]{
+		margin-right: 5px;
+	}
+	div#id-content form input{
+		margin: 0 5px;
+		display: none;
+	}
+	div#id-content form.new input{
+		display: inline-block;
+	}
+	div#id-content form span, div#id-content form label{
+		margin: 0 5px;
+		cursor: pointer;
+	}
+	span.red, label.red{
+		color: red;
+	}
+	input.red{
+		border: 1px solid red;
+	}
+</style>
+{% endblock %}

@@ -1,0 +1,9 @@
+*.pyc
+.project
+.pydevproject
+.settings
+settings_local.py
+public/*
+logs/*
+*.pid
+*.sqlite
